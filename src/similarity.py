@@ -1,5 +1,6 @@
 from functools import partial
 from typing import Callable
+import concurrent.futures
 
 import numpy as np
 
@@ -14,12 +15,19 @@ def _complenght(data: bytes, compressor: compFunc) -> int:
     """
     return len(compressor(data))
 
+# helper to compute compressed lengths for a batch of pairs
+def _batch_complengths(pairs: list[tuple[int,int,bytes]], compressor: compFunc) -> list[tuple[int,int,int]]:
+    results = []
+    for i, j, data in pairs:
+        results.append((i, j, len(compressor(data))))
+    return results
+
 def sim_C_NCD(files: list[File], compressor: compFunc) -> np.ndarray:
     """
     Computes the pairwise similarity of a list of files using Normalized Compression Distance (NCD) with the specified compressor.
-    First parameter is a list of tuples where each tuple contains the filename and the bytes representing the file content.
+    First parameter is a list of File objects.
     Second parameter is a compressor function.
-    Returns a list of tuples containing the names of the compared files and their similarity score.
+    Returns a similarity matrix.
     """
     
     def get_all_compressed_lengths(files: list[File], compressor: compFunc):
@@ -29,12 +37,22 @@ def sim_C_NCD(files: list[File], compressor: compFunc) -> np.ndarray:
         """
         compressed_file_lengths = list(map(lambda file: _complenght(file.get_bytes(), compressor), files))
         compressed_pair_lengths = np.zeros((len(files), len(files)), dtype=int)
+        # Batch-based parallel computation of pairwise compressed lengths
+        # prepare all pairs
+        pairs = [(i, j, files[i].get_bytes() + files[j].get_bytes())
+                 for i in range(len(files)) for j in range(i, len(files))]
+        batch_size = 100
+        batches = [pairs[k:k+batch_size] for k in range(0, len(pairs), batch_size)]
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            futures = [executor.submit(_batch_complengths, batch, compressor) for batch in batches]
+            for future in concurrent.futures.as_completed(futures):
+                for i, j, val in future.result():
+                    compressed_pair_lengths[i, j] = val
+                    if i != j:
+                        compressed_pair_lengths[j, i] = val
+        # Alternative to the above 2 lines (similar running time):
+        # compressed_pair_lengths += compressed_pair_lengths.T - np.diag(np.diag(compressed_pair_lengths))  # Make it symmetric (copy upper triangle to lower triangle)
         
-        for i in range(len(files)):
-            for j in range(i, len(files)):
-                file_i, file_j = files[i], files[j]
-                compressed_pair_lengths[i, j] = _complenght(file_i.get_bytes() + file_j.get_bytes(), compressor)
-        compressed_pair_lengths += compressed_pair_lengths.T - np.diag(np.diag(compressed_pair_lengths))  # Make it symmetric (copy upper triangle to lower triangle)
         return compressed_file_lengths, compressed_pair_lengths
         
     def generate_similarity_matrix(compressed_file_lengths, compressed_pair_lengths):
