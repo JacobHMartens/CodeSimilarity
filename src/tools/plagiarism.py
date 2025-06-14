@@ -4,19 +4,20 @@ import shutil
 import subprocess
 import pandas as pd
 
-def plag_jplag_java(file_paths: list) -> list:
-    os.chdir(Path(os.path.dirname(__file__)).parent)
-    # Create a temporary directory to store the files
-    temp_dir = os.path.join(os.getcwd(), "temp")
+from data import Data
+
+def plag_jplag_java(data: Data) -> list:
+    tools_dir = Path(os.path.dirname(__file__)).parent.parent
+    os.chdir(tools_dir)
+    temp_dir = data.make_subset_dir()
+    
     try:
-        os.makedirs(temp_dir, exist_ok=True)
-        # Copy the files to the temporary directory
-        for file_path in file_paths:
-            shutil.copy(file_path, temp_dir)
-
         # Run jplag tool
-        subprocess.run(["java", "-jar", "./tools/jplag/jplag-6.1.0-jar-with-dependencies.jar", temp_dir, "--csv-export", "-M", "RUN"])
-
+        res = subprocess.run(["java", "-jar", "./tools/jplag/jplag-6.1.0-jar-with-dependencies.jar", temp_dir, "--csv-export", "-M", "RUN"])
+        if res.returncode != 0:
+            raise Exception(f"JPlag execution failed with return code: {res.returncode}. Error message: {res.stderr.decode('utf-8')}")
+        print("JPlag executed successfully. Results are saved in the 'results' directory.")
+        
         # Read the output CSV file
         results_dir = os.path.join(os.getcwd(), "results")
         csv_file = os.path.join(results_dir, "results.csv")
@@ -24,6 +25,7 @@ def plag_jplag_java(file_paths: list) -> list:
 
         # Extract similarity values
         similarity_values = df["averageSimilarity"].tolist()
+
     except Exception as e:
         print(f"An error occurred: {e}")
         exit(1)
