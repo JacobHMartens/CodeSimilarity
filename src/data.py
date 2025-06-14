@@ -26,18 +26,25 @@ class File:
         return self._bytes
 
 
-@dataclass 
 class Data:
     num_dirs: int
     num_files: int
     samples_dir: Path
     temp_dir: Path = None
-    files: list[File] = field(default_factory=list)
-    subdirs: list[Path] = field(default_factory=list)
+    files: list[File] = []
+    subdirs: list[Path] = []
+    
+    def __init__(self, num_dirs: int, num_files: int, samples_dir: Path):
+        self.num_dirs = num_dirs
+        self.num_files = num_files
+        self.samples_dir = samples_dir.absolute()
+        
+        if not self.samples_dir.is_dir():
+            raise ValueError(f"Samples directory {self.samples_dir} does not exist or is not a directory.")
                     
     def load_files(self):
         """
-        Load the first num_files files from each subdirectory. Load the subdirectories if they haven't been loaded yet.
+        Load the first num_files files from each subdirectory. Load the subdirectories as well.
         """
         self.subdirs = sorted([dir for dir in self.samples_dir.iterdir() if dir.is_dir()])[:self.num_dirs]
         for i, subdir in enumerate(self.subdirs):
@@ -52,21 +59,25 @@ class Data:
         with shutil.rmtree(temp_dir).
         """
         # 1) create a temp directory
-        self.temp_dir = Path(tempfile.mkdtemp())
+        self.temp_dir = Path(tempfile.mkdtemp(dir=self.samples_dir.parent))
             
         if not self.files:
             self.load_files()
 
-        # 2) clone each subdir in the new temp_dir
-        for subdir in self.subdirs:
-            target_subdir = self.samples_dir / subdir.name
-            target_subdir.mkdir()
+        # 2) for each file, create a link in a new subdir
+        for file in self.files:
+            # Get the subdir for the target file
+            subdir = self.subdirs[file.group]
+            # Create the target subdir in the temp directory
+            target_subdir = self.temp_dir / subdir.name
+            target_subdir.mkdir(exist_ok=True)
             
-            # 3) for each file, create a link in the new subdir
-            for file in self.files[subdir]:
-                link_path = target_subdir / file.name
-                try:
-                    os.link(file, link_path)
-                except (OSError, NotImplementedError):
-                    # fall back to symlink
-                    os.symlink(file, link_path)
+            # Create a hard link or symlink to the file in the target subdir
+            link_path = target_subdir / file.name
+            try:
+                os.link(file.path, link_path)
+            except (OSError, NotImplementedError):
+                # fall back to symlink
+                os.symlink(file.path, link_path)
+        
+        return self.temp_dir
