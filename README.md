@@ -10,5 +10,5 @@ Use pipreqs. Docs: <https://github.com/bndr/pipreqs>
 pip install pipreqs
 
 # Create requirements.txt
-pipreqs .\src --force
+pipreqs .\src --force --savepath requirements.txt
 ```
