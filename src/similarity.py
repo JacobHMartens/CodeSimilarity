@@ -37,11 +37,13 @@ def sim_C_NCD(files: list[File], compressor: compFunc) -> np.ndarray:
         """
         compressed_file_lengths = list(map(lambda file: _complenght(file.get_bytes(), compressor), files))
         compressed_pair_lengths = np.zeros((len(files), len(files)), dtype=int)
+        
         # Batch-based parallel computation of pairwise compressed lengths
+        batch_size = 20
+        
         # prepare all pairs
         pairs = [(i, j, files[i].get_bytes() + files[j].get_bytes())
                  for i in range(len(files)) for j in range(i, len(files))]
-        batch_size = 100
         batches = [pairs[k:k+batch_size] for k in range(0, len(pairs), batch_size)]
         with concurrent.futures.ProcessPoolExecutor() as executor:
             futures = [executor.submit(_batch_complengths, batch, compressor) for batch in batches]

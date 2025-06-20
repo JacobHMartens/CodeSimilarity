@@ -24,6 +24,10 @@ def get_simC_matrix(simC: simCFunc, compressor: compFunc, data: Data):
     return sim_matrix, x_labels, y_labels
 
 def cluster_sim_matrix(sim_matrix, x_labels, y_labels, data):
+    """
+    Cluster similarity matrix based on file groups (subdirectories) such that the 
+    higher average similarity within each group is closer to the top left corner.
+    """
     # Group files by their group attribute
     from collections import defaultdict
     group_to_indices = defaultdict(list)
@@ -66,6 +70,52 @@ def plot_heat_map(sim_matrix, x_labels=None, y_labels=None):
     else:
         plt.axis('off')
     plt.show()
+    
+def plot_fscores(fscores_per_tool: dict):
+    """
+    Plot F-scores.
+    """
+    plt.figure(figsize=(8, 5))
+    plt.title("F-scores per tool")
+    plt.xlabel("Similarity threshold")
+    plt.ylabel("F-score")
+    thresholds = np.arange(0.1, 1, 0.1)
+    for tool, fscore in fscores_per_tool.items():
+        plt.plot(thresholds, fscore, label=tool)
+    
+    plt.legend()
+    plt.show()
+    
+
+def get_fscore(sim_matrix: np.ndarray, data: Data, threshold = 0.5):
+    """
+    Calculate the F-score for the similarity matrix.
+    """
+    grouped_sim_matrix = \
+        sim_matrix \
+        .reshape(data.num_dirs, data.num_files, data.num_dirs, data.num_files) \
+        .transpose(0, 2, 1, 3)
+        
+    idx = np.arange(data.num_dirs)
+    grouped_diagonal = grouped_sim_matrix[idx, idx]
+    # print("Similarity Matrix:")
+    # print(sim_matrix)
+    # print("Grouped Similarity Matrix:")
+    # print(grouped_sim_matrix)
+    # print("Grouped Diagonal:")
+    # print(grouped_diagonal)
+
+    true_positives = np.sum(grouped_diagonal > threshold)
+    false_positives = np.sum(sim_matrix > threshold) - true_positives
+    false_negatives = data.num_dirs * data.num_files**2 - true_positives
+    
+    # print(f"True Positives: {true_positives}, False Positives: {false_positives}, False Negatives: {false_negatives}")
+    
+    precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
+    recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 else 0
+    
+    fscore = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+    return float(fscore)
 
 
 def parse_args():
@@ -90,11 +140,27 @@ if __name__ == "__main__":
         data=data
     )
     
+    tools = [comp_bzip2, comp_gzip, comp_zlib, comp_zstandard, comp_zstd]
+    fscores_per_tool = {}
+    for tool in tools:
+        for sim_C in [sim_C_NCD, sim_C_ICD]:
+            sim_matrix, _, _ = get_simC_matrix(
+                simC=sim_C, 
+                compressor=tool, 
+                data=data
+            )
+            fscores = []
+            for t in range(1, 10):
+                fscores.append(get_fscore(np.triu(sim_matrix) if sim_C == sim_C_NCD else sim_matrix, data, t/10))  # Calculate F-score (upper triangle of the matrix for NCD)
+            fscores_per_tool[f"{tool.__name__[5:]}_{sim_C.__name__[6:]}"] = fscores
+    
+    plot_fscores(fscores_per_tool)
+    
     # plag_jplag_java(data)
     
     # Cluster the similarity matrix based on file groups
-    sim_matrix, x_labels, y_labels = cluster_sim_matrix(sim_matrix, x_labels, y_labels, data)
+    # sim_matrix, x_labels, y_labels = cluster_sim_matrix(sim_matrix, x_labels, y_labels, data)
     
     # plot_heat_map(sim_matrix, x_labels, y_labels)
-    plot_heat_map(sim_matrix, None, None)  # Plot without labels
+    # plot_heat_map(sim_matrix, None, None)  # Plot without labels
     
