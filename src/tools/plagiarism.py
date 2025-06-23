@@ -4,9 +4,9 @@ import shutil
 import subprocess
 import pandas as pd
 
-from data import Data
+from data import JAVA250
 
-def plag_jplag_java(data: Data) -> list:
+def plag_jplag_java(data: JAVA250) -> list:
     tools_dir = Path(os.path.dirname(__file__)).parent.parent
     os.chdir(tools_dir)
     temp_dir = data.make_subset_dir()
