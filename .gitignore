@@ -1,5 +1,5 @@
 .venv
 .vscode
 __pycache__
-samples/Project_CodeNet_Java250
+**/Project_CodeNet_Java250
 *.prof
