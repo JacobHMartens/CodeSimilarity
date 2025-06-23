@@ -28,7 +28,7 @@ class File:
         return self._bytes
 
 
-JAVA250_DATA_PATH: Path = Path("data/Project_CodeNet_Java250")
+JAVA250_DATA_PATH: Path = Path("Project_CodeNet_Java250")
 NUM_DIRS: int = 0
 NUM_FILES_PER_DIR: int = 0
 files: list[File] = []
