@@ -20,7 +20,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("num_dirs", 
                         type=int, 
-                        help="Number of sample directories to process.")
+                        help="Number of directories to process from the dataset.")
     parser.add_argument("num_files", 
                         type=int, 
                         help="Number of files to process in each directory.")
@@ -44,9 +44,9 @@ def parse_args():
     parser.add_argument("-PF", "--PLOT_FSCORES", 
                         action="store_true", 
                         help="Plot F-scores for the tools.")
-    parser.add_argument("-CL", "--CLUSTER",
+    parser.add_argument("-NO-CL", "--NO_CLUSTER",
                         action="store_true", 
-                        help="Cluster the similarity matrix based on file groups (file directories).")
+                        help="Disable clustering of the similarity matrices.")
     
     args = parser.parse_args()
     required_flags = ["-NCD", "-ICD"]
@@ -71,8 +71,10 @@ def run():
             sim_matrix = sim_C_ICD(data.files, comp)
             data.sim_matrices[get_tool_label("ICD", comp)] = sim_matrix
             
-    if args.CLUSTER:
-        data.cluster_matrices_by_groups()
+    if not args.NO_CLUSTER:
+        for sim_id, sim_matrix in data.sim_matrices.items():
+            print("clusting", sim_id)
+            data.sim_matrices[sim_id] = data.cluster_matrices_by_groups(sim_matrix)
 
     if args.PLOT_HEATMAP:
         show_plots = True

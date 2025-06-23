@@ -82,7 +82,7 @@ def get_fscore(sim_matrix: np.ndarray, threshold = 0.5):
     
     return fscore
 
-def cluster_matrices_by_groups():  # TODO: Rework
+def cluster_matrices_by_groups(sim_matrix):  # TODO: Rework
     """
     Cluster similarity matrices based on file groups (subdirectories) such that the 
     higher average similarity within each group is closer to the top left corner.
@@ -104,7 +104,7 @@ def cluster_matrices_by_groups():  # TODO: Rework
     
     # Reorder matrix and labels
     sim_matrix = sim_matrix[np.ix_(new_order, new_order)]
-    x_labels = [x_labels[i] for i in new_order]
-    y_labels = [y_labels[i] for i in new_order]
+    # x_labels = [x_labels[i] for i in new_order]
+    # y_labels = [y_labels[i] for i in new_order]
     
-    return sim_matrix, x_labels, y_labels
+    return sim_matrix#, x_labels, y_labels
