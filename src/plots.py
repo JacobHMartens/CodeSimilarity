@@ -39,7 +39,7 @@ def create_fscores_plot():
     ax.set_ylabel("F-score")
     
     
-    thresholds = np.arange(0.1, 1, 0.1)         
+    thresholds = np.arange(0.1, 1, 0.02)         
     for sim_id, sim_matrix in data.sim_matrices.items():
         # Calculate F-scores (use upper triangle of the matrix for symmetric matrices)
         fscores = [data.get_fscore(np.triu(sim_matrix) if sim_matrix.isSymmetric else sim_matrix, t) for t in thresholds]

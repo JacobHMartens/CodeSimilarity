@@ -10,7 +10,7 @@ The CLI tool has the following features:
 ![Similarity heatmap example](assets/heatmap_30_30_NCD_zstd.png)
 
 2. Plotting F-scores of different similarity tools in a comparative line chart.
-![F-scores example](assets/fscores_30_30.png)
+![F-scores example](assets/fscores_4_300.png)
 
 ## Requirements
 
