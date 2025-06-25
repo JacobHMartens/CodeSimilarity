@@ -13,7 +13,7 @@ class CompFuncAction(argparse.Action):
             if hasattr(comp, f"comp_{value}"):
                 compressors.append(getattr(comp, f"comp_{value}"))
             else:
-                raise argparse.ArgumentError(f"Unknown compressor: {value}")
+                raise argparse.ArgumentError(self, f"Unknown compressor: {value}")
         setattr(namespace, self.dest, compressors)
 
 
@@ -30,9 +30,9 @@ class SchemeAction(argparse.Action):
                 if 0 < k <= 300:
                     schemes.append(lambda file, sim_c: classify_KNN(file, sim_c, k))
                 else:
-                    argparse.ArgumentError(f"K in knnK must be an integer between 1 and 300. Got {k}.")
+                    raise argparse.ArgumentError(self, f"K in knnK must be an integer between 1 and 300. Got {k}.")
             else:
-                argparse.ArgumentError(f"Invalid classification scheme: {scheme}. Must be one of ['bm', 'ha', 'knnK'], where K is an integer, 0 < K <= 300.")
+                raise argparse.ArgumentError(self, f"Invalid classification scheme: {scheme}. Must be one of ['bm', 'ha', 'knnK'], where K is an integer, 0 < K <= 300.")
         setattr(namespace, self.dest, schemes)
 
 
@@ -99,13 +99,13 @@ def parse_args(args: str=None):
     args = parser.parse_args(args)
     
     if not 0 < args.num_dirs <= 250:
-        argparse.ArgumentError(f"Number of directories must be between 1 and 250. Got {args.num_dirs}.")
+        raise argparse.ArgumentError(None, f"Number of directories must be between 1 and 250. Got {args.num_dirs}.")
     if not 0 < args.num_files <= 300:
-        argparse.ArgumentError(f"Number of files per directory must be between 1 and 100. Got {args.num_files}.")
+        raise argparse.ArgumentError(None, f"Number of files per directory must be between 1 and 300. Got {args.num_files}.")
         
     required_flags = ["-NCD", "-ICD"]
     if not (args.ICD or args.NCD):
-        argparse.ArgumentError(f"At least one of the following flags must be set: {required_flags}")
+        raise argparse.ArgumentError(None, f"At least one of the following flags must be set: {required_flags}")
     
     return args
     
