@@ -3,9 +3,6 @@ from collections import defaultdict
 
 import numpy as np
 
-class SimMatrix(np.ndarray):
-    isSymmetric: bool = False
-
 class File:
     name: str
     path: Path
@@ -26,6 +23,12 @@ class File:
         if self._bytes is None:
             self._bytes = self.path.read_bytes()
         return self._bytes
+    
+    
+class SimMatrix(np.ndarray):
+    isSymmetric: bool = False
+    xAxis: list[File] = None
+    yAxis: list[File] = None
 
 
 JAVA250_DATA_PATH: Path = Path("Project_CodeNet_Java250")
@@ -42,18 +45,29 @@ def load_java250_data(num_dirs: int, num_files: int):
     """
     Load the first 'num_files' files from the first 'num_dirs' subdirectories.
     """
-    global NUM_DIRS, NUM_FILES_PER_DIR, subdirs, files
+    global NUM_DIRS, NUM_FILES_PER_DIR
+    global all_files_per_dir, sample_files, classification_files
     NUM_DIRS = num_dirs
     NUM_FILES_PER_DIR = num_files
     
-    files.clear()
-    subdirs = sorted([dir for dir in JAVA250_DATA_PATH.iterdir() if dir.is_dir()])[:num_dirs]
-    for i, subdir in enumerate(subdirs):
-        dir_files = sorted([file for file in subdir.iterdir() if file.is_file()])[:num_files]
-        files.extend(map(lambda file: File(file, group=i), dir_files))
+    all_dirs = sorted([dir for dir in JAVA250_DATA_PATH.iterdir() if dir.is_dir()])
+    all_files_per_dir = [
+        sorted([File(file, group=i) for file in dir.iterdir() if file.is_file()], 
+               key=lambda f: f.name
+            ) for i, dir in enumerate(all_dirs)]
+    
+    sample_files = [file for dir in all_files_per_dir[:num_dirs] for file in dir[:num_files]]
+    
+
+def load_classification_data(num_files: int):
+    """
+    Load the last 'num_files' files from the first 'num_dirs' subdirectories for classification.
+    """
+    global classification_files
+    classification_files = [file for dir in all_files_per_dir[:NUM_DIRS] for file in dir[-num_files:]]
         
 
-def get_fscore(sim_matrix: np.ndarray, threshold = 0.5):
+def get_fscore(sim_matrix: SimMatrix, threshold = 0.5):
     """
     Calculate the F-score for the similarity matrix.
     """
@@ -74,7 +88,7 @@ def get_fscore(sim_matrix: np.ndarray, threshold = 0.5):
     # Actual Positives: Total number of similarity scores in the diagonal 
     true_positives = np.sum(grouped_diagonal > threshold) 
     false_positives = np.sum(sim_matrix > threshold) - true_positives  
-    actual_positives = len(files) * NUM_FILES_PER_DIR
+    actual_positives = len(sample_files) * NUM_FILES_PER_DIR
     
     # Calculate precision, recall, and F-score    
     precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
@@ -90,7 +104,7 @@ def cluster_matrices_by_groups(sim_matrix):  # TODO: Rework
     """
     # Group files by their group attribute
     group_to_indices = defaultdict(list)
-    for idx, file in enumerate(files):
+    for idx, file in enumerate(sample_files):
         group_to_indices[file.group].append(idx)
     
     # Sort groups
@@ -109,3 +123,4 @@ def cluster_matrices_by_groups(sim_matrix):  # TODO: Rework
     # y_labels = [y_labels[i] for i in new_order]
     
     return sim_matrix#, x_labels, y_labels
+    
