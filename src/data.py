@@ -31,8 +31,9 @@ class File:
 JAVA250_DATA_PATH: Path = Path("Project_CodeNet_Java250")
 NUM_DIRS: int = 0
 NUM_FILES_PER_DIR: int = 0
-files: list[File] = []
-subdirs: list[Path] = []
+all_files_per_dir: list[list[File]] = None
+sample_files: list[File] = None
+classification_files: list[File] = None
 
 sim_matrices: dict[str, SimMatrix] = {}
 

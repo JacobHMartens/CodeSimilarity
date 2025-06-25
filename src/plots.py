@@ -21,7 +21,7 @@ def create_heatmap_plots():
             ax.axis("off")
         else:
             labels = range(1, data.NUM_DIRS + 1)
-            ticks = [t for t in range(0, len(data.files), data.NUM_FILES_PER_DIR)]
+            ticks = [t for t in range(0, len(data.sample_files), data.NUM_FILES_PER_DIR)]
             ax.set_xticks(ticks, labels)
             ax.set_yticks(ticks, labels)
         fig.tight_layout()

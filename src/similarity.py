@@ -73,6 +73,21 @@ def sim_C_NCD(files: list[File], compressor: compFunc) -> SimMatrix:
     return sim_matrix
 
 
+def sim_C_NCD_single(file1: File, file2: File, compressor: compFunc) -> float:
+    """
+    Computes the Normalized Compression Distance (NCD) between two files using the specified compressor.
+    Returns a similarity score between 0 and 1.
+    """
+    x = file1.get_bytes()
+    y = file2.get_bytes()
+    
+    Zx = _complenght(x, compressor)
+    Zy = _complenght(y, compressor)
+    Zxy = _complenght(x + y, compressor)
+    
+    return 1 - (Zxy - min(Zx, Zy)) / max(Zx, Zy)
+
+
 def sim_C_ICD(files: list[File], compressor: compFunc) -> SimMatrix:
     """
     Computes the pairwise similarity of a list of files using Inclusion Compression Divergence (ICD) with the specified compressor.
