@@ -13,12 +13,10 @@ class CompFuncAction(argparse.Action):
             if hasattr(comp, f"comp_{value}"):
                 compressors.append(getattr(comp, f"comp_{value}"))
             else:
-                raise ValueError(f"Unknown compressor: {value}")
+                raise argparse.ArgumentError(f"Unknown compressor: {value}")
         setattr(namespace, self.dest, compressors)
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
 class SchemeAction(argparse.Action):
     def __call__(self, parser, namespace, values: list[str], option_string=None):
         schemes = []
@@ -36,17 +34,25 @@ class SchemeAction(argparse.Action):
             else:
                 argparse.ArgumentError(f"Invalid classification scheme: {scheme}. Must be one of ['bm', 'ha', 'knnK'], where K is an integer, 0 < K <= 300.")
         setattr(namespace, self.dest, schemes)
+
+
+def parse_args(args: str=None):
+    parser = argparse.ArgumentParser(exit_on_error=False)
+    
+    # POSITIONAL ARGUMENTS
     parser.add_argument("num_dirs", 
                         type=int, 
-                        help="Number of directories to process from the dataset.")
+                        help="Number of directories to process from the dataset. 0 < num_dirs <= 250.")
     parser.add_argument("num_files", 
                         type=int, 
-                        help="Number of files to process in each directory.")
-    parser.add_argument("-C", "--compressors", 
+                        help="Number of files to process in each directory. 0 < num_files <= 300.")
+    
+    # OPTIONS
+    parser.add_argument("-c", "--compressors", 
                         type=str, 
                         nargs="+", 
                         choices=["bzip2", "gzip", "zlib", "zstandard", "zstd"], 
-                        default="bzip2", 
+                        required=True, 
                         action=CompFuncAction)
     parser.add_argument("-cf", "--num-classification-files",
                         type=int,
@@ -73,20 +79,33 @@ class SchemeAction(argparse.Action):
     parser.add_argument("-ICD", 
                         action="store_true", 
                         help="Use Inclusion Compression Divergence (ICD) for similarity calculation.")
-    parser.add_argument("-PH", "--PLOT_HEATMAP", 
+    parser.add_argument("-PH", "--plot-heatmaps", 
                         action="store_true", 
                         help="Generate heatmaps of the similarity matrices.")
-    parser.add_argument("-PF", "--PLOT_FSCORES", 
+    parser.add_argument("-PF", "--plot-fscores", 
                         action="store_true", 
                         help="Plot F-scores for the tools.")
-    parser.add_argument("-NO-CL", "--NO_CLUSTER",
+    parser.add_argument("-CL", "--cluster",
+                        action=argparse.BooleanOptionalAction, 
+                        default=True,
+                        help="Enable clustering of the similarity matrices (default). Disable with --no-cluster.")
+    parser.add_argument("-CLFY", "--classify",
+                        action="store_true",
+                        help="Classify the classification-files using the selected classification schemes.")
+    parser.add_argument("-I", "--interactive",
                         action="store_true", 
-                        help="Disable clustering of the similarity matrices.")
+                        help="Run tool in interactive mode (keep CLI alive).")
     
-    args = parser.parse_args()
+    args = parser.parse_args(args)
+    
+    if not 0 < args.num_dirs <= 250:
+        argparse.ArgumentError(f"Number of directories must be between 1 and 250. Got {args.num_dirs}.")
+    if not 0 < args.num_files <= 300:
+        argparse.ArgumentError(f"Number of files per directory must be between 1 and 100. Got {args.num_files}.")
+        
     required_flags = ["-NCD", "-ICD"]
     if not (args.ICD or args.NCD):
-        parser.error(f"At least one of the following flags must be set: {required_flags}")
+        argparse.ArgumentError(f"At least one of the following flags must be set: {required_flags}")
     
     return args
     
@@ -106,16 +125,15 @@ def run():
             sim_matrix = sim_C_ICD(data.sample_files, comp)
             data.sim_matrices[get_tool_label("ICD", comp)] = sim_matrix
             
-    if not args.NO_CLUSTER:
+    if args.cluster:
         for sim_id, sim_matrix in data.sim_matrices.items():
-            print("clusting", sim_id)
             data.sim_matrices[sim_id] = data.cluster_matrices_by_groups(sim_matrix)
 
-    if args.PLOT_HEATMAP:
+    if args.plot_heatmaps:
         show_plots = True
         plots.create_heatmap_plots()
             
-    if args.PLOT_FSCORES:
+    if args.plot_fscores:
         show_plots = True    
         plots.create_fscores_plot()
         
@@ -126,3 +144,21 @@ def run():
 
     if show_plots:
         plots.show_plots()
+        
+    if args.interactive:
+        print("Interactive mode enabled. Press Ctrl+C to exit.")
+        run_interactive()
+        
+            
+
+def run_interactive():
+    try:
+        while True:
+            args = input("Enter arguments: ").strip()
+            parse_args(args.split())
+            run_interactive()
+    except KeyboardInterrupt:
+        print("\nExiting interactive mode.")
+    except argparse.ArgumentError as e:
+        print(f"Error: {e}")
+        run_interactive()
