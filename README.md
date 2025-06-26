@@ -6,11 +6,13 @@ The repository contains a CLI tool for benchmarking and comparing different meth
 
 The CLI tool has the following features:
 
-1. Creating heatmaps showing the pairwise similarity scores between Java source code files from the [Project CodeNet Java250](https://developer.ibm.com/data/project-codenet/) dataset.
-![Similarity heatmap example](assets/heatmap_30_30_NCD_zstd.png)
+1. Creating heatmaps showing the pairwise similarity scores between Java source code files from the [Project CodeNet Java250](https://developer.ibm.com/data/project-codenet/) dataset. \
+![Similarity heatmap example](assets/heatmap_30_30_NCD_zstd.png) \
+Created with ``py src/main.py 30 30 -c bzip2 -NCD -PH``.
 
-2. Plotting F-scores of different similarity tools in a comparative line chart.
-![F-scores example](assets/fscores_4_300.png)
+2. Plotting F-scores of different similarity tools in a comparative line chart. \
+![F-scores example](assets/fscores_4_300.png) \
+Created with ``py src/main.py 4 300 -c bzip2 zstd zstandard zlib gzip -NCD -ICD -PF``.
 
 ## Requirements
 
@@ -29,19 +31,20 @@ To use the tool contained in this repository, follow this setup:
 
 The CLI tool is envoked by executing ``main.py``. The following options are available:
 
-| Argument                      | Type         | Explanation |
-|-                              |-             |-|
-| Positional (required)         |              | |
-| ``num_dirs``                  | ``int``      | Number of directories to process from the dataset. |
-| ``num_files``                 | ``int``      | Number of files to process in each directory. |
-| Options                       |              | |
-| ``-C``, ``--compressors``     | Multi-choice | Specify compressor(s). Options: [bzip2, gzip, zlib, zstandard, zstd]. |
-| ``-NCD``                      | Flag         | Use Normalized Compression Distance (NCD) for similarity calculation. |
-| ``-ICD``                      | Flag         | Use Inclusion Compression Divergence (ICD) for similarity calculation. |
-| ``-PH``, ``--PLOT_HEATMAP``   | Flag         | Generate heatmaps of the similarity matrices. |
-| ``-PF``, ``--PLOT_FSCORES``   | Flag         | Plot F-scores for the similarity tools. |
-| ``-NO-CL``, ``--NO_CLUSTER``  | Flag         | Disable clustering of the similarity matrices. |
-| ``-h``, ``--help``            | Flag         | Show this help message and exit. |
+| Argument                                    | Type         | Explanation |
+|-                                            | -            | - |
+| **Positional (required)**                   | -            | - |
+| ``num_dirs``                                | ``int``      | Number of directories to process from the dataset. |
+| ``num_files``                               | ``int``      | Number of files to process in each directory. |
+| **Options**                                 | -            | - |
+| ``-c``, ``--compressors``                   | Multi-choice | Specify compressor(s). Options: [bzip2, gzip, zlib, zstandard, zstd]. |
+| **Flags**                                   | -            | - |
+| ``-NCD``                                    | Flag         | Use Normalized Compression Distance (NCD) for similarity calculation. |
+| ``-ICD``                                    | Flag         | Use Inclusion Compression Divergence (ICD) for similarity calculation. |
+| ``-PH``, ``--plot-heatmap``                 | Flag         | Generate heatmaps of the similarity matrices. |
+| ``-PF``, ``--plot-fscores``                 | Flag         | Plot F-scores for the similarity tools. |
+| ``-CL``, ``--cluster``, ``--no-cluster``    | Flag         | Enable/Disable clustering of the similarity matrices (default: Enabled). |
+| ``-h``, ``--help``                          | Flag         | Show this help message and exit. |
 
 For example, creating heatmaps for the first 10 files in the first 5 directories of the Java250 dataset using NCD-based similarity tool with bzip2 and zstd:
 ```sh
@@ -49,6 +52,28 @@ py src/main.py 5 10 -NCD -C bzip2 zstd -PH
 ```
 
 ## Development
+
+### Source files and contents
+
+- ``main.py``: Main entry point of the tool.
+
+- ``cli.py``: 
+
+- ``classification.py``
+
+- ``data.py``
+
+- ``logging.py``
+
+- ``minify.py``
+
+- ``similarity.py``
+
+- ``plots.py``
+
+- ``tools/compressor.py``
+
+- ``tools/plagiarism.py``
 
 ### Creating requirements.txt
 Use pipreqs. Docs: <https://github.com/bndr/pipreqs>
