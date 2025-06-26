@@ -72,7 +72,6 @@ def sim_C_NCD(files: list[File], compressor: compFunc) -> SimMatrix:
     sim_matrix.isSymmetric = True  # NCD is symmetric across the main diagonal
     return sim_matrix
 
-
 def sim_C_NCD_single(file1: File, file2: File, compressor: compFunc) -> float:
     """
     Computes the Normalized Compression Distance (NCD) between two files using the specified compressor.

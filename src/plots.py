@@ -47,3 +47,27 @@ def create_fscores_plot():
         
     ax.legend()
     return fig, ax
+
+
+def create_classification_plot():
+    plots = []
+    
+    for clfy_id, clfy_per_group in data.classification_per_group_per_tool.items():
+        fig, ax = plt.subplots()
+        ax.set_title(f"Classification heatmap: {clfy_id}")
+        clfy_per_group = (clfy_per_group - np.min(clfy_per_group)) / (np.max(clfy_per_group) - np.min(clfy_per_group))  # Normalize to [0, 1]
+        im = ax.imshow(clfy_per_group, cmap="viridis", interpolation="nearest")
+        fig.colorbar(im, ax=ax)
+
+        if data.NUM_DIRS > 15:
+            ax.axis("off")
+        else:
+            labels = range(1, data.NUM_DIRS + 1)
+            ticks = [i for i in range(data.NUM_DIRS)]
+            ax.set_xticks(ticks, labels)
+            ax.set_yticks(ticks, labels)
+        fig.tight_layout()
+        
+        plots.append((fig, ax))
+    
+    return plots

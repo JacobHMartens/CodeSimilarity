@@ -38,6 +38,7 @@ all_files_per_dir: list[list[File]] = None
 sample_files: list[File] = None
 classification_files: list[File] = None
 
+classification_per_group_per_tool: dict = defaultdict(lambda: np.zeros((NUM_DIRS, NUM_DIRS), dtype=int))
 sim_matrices: dict[str, SimMatrix] = {}
 
     

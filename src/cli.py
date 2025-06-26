@@ -54,7 +54,7 @@ def parse_args(args: str=None):
                         choices=["bzip2", "gzip", "zlib", "zstandard", "zstd"], 
                         required=True, 
                         action=CompFuncAction)
-    parser.add_argument("-cf", "--num-classification-files",
+    parser.add_argument("-ncf", "--num-classification-files",
                         type=int,
                         metavar="{1-300}",
                         choices=range(1, 301),
@@ -85,6 +85,9 @@ def parse_args(args: str=None):
     parser.add_argument("-PF", "--plot-fscores", 
                         action="store_true", 
                         help="Plot F-scores for the tools.")
+    parser.add_argument("-PC", "--plot-classification", 
+                        action="store_true", 
+                        help="Plot classification results.")
     parser.add_argument("-CL", "--cluster",
                         action=argparse.BooleanOptionalAction, 
                         default=True,
@@ -141,6 +144,11 @@ def run():
         data.load_classification_data(args.num_classification_files)
         for scheme in args.schemes:
             classify_files(scheme, args.compressors)
+            print(data.classification_per_group_per_tool)
+            
+    if args.plot_classification:
+        show_plots = True
+        plots.create_classification_plot()
 
     if show_plots:
         plots.show_plots()

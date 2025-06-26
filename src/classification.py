@@ -1,13 +1,28 @@
 from collections import defaultdict
+
 import data
-from similarity import sim_C_NCD_single
+from similarity import sim_C_NCD_single, get_tool_label
 
 
-def classify_files(scheme: callable, compressors: list[callable]):
-    for file in data.classification_files:
-        for comp in compressors:
+def get_classification_label(scheme: callable, tool_label: str):
+    match scheme.__name__:
+        case "classify_best_match":
+            return f"{tool_label}_best_match"
+        case "classify_highest_average":
+            return f"{tool_label}_highest_average"
+        case "classify_KNN":
+            return f"{tool_label}_KNN"
+        case _:
+            print("Unknown scheme: " + scheme.__name__)
+            return f"{tool_label}_KNN"  # TODO: Fix KNN is a lambda so it doesn't have a name (funky function passing, do better...)
+
+def classify_files(scheme: callable, compressors: list[callable]):    
+    for comp in compressors:
+        label = get_classification_label(scheme, get_tool_label("NCD", comp))
+        for file in data.classification_files:
             classification = scheme(file, lambda f, sf: sim_C_NCD_single(f, sf, comp))
-            print(f"File: {file.name}, Actual group: {file.group}, Classification: {classification}")
+            # print(f"File: {file.name}, Actual group: {file.group}, Classification: {classification}")
+            data.classification_per_group_per_tool[label][file.group][classification] += 1            
 
 
 def classify_best_match(file, sim_c):
