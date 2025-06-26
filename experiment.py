@@ -2,8 +2,13 @@ import subprocess
 
 def run_commands():
     commands = [
-        "py -m cProfile -o HeatFscores.prof src/main.py 5 300 -c bzip2 gzip zlib zstd zstandard -NCD -PH -PF",
-        "py -m cProfile -o classify.prof src/main.py 5 200 -c bzip2 gzip zlib zstd zstandard -NCD -CLFY -ncf 100 -cs bm knn10 ha",
+        # "py -m cProfile -o HeatFscores.prof src/main.py 5 300 -c bzip2 gzip zlib zstd zstandard -NCD -PH -PF",
+        "py -m cProfile -o classify.prof src/main.py 5 200 -c bzip2 gzip -NCD -CLFY -ncf 100 -cs bm -PC",
+        "py -m cProfile -o classify.prof src/main.py 5 200 -c zlib zstd zstandard -NCD -CLFY -ncf 100 -cs bm -PC",
+        "py -m cProfile -o classify.prof src/main.py 5 200 -c bzip2 gzip -NCD -CLFY -ncf 100 -cs ha -PC",
+        "py -m cProfile -o classify.prof src/main.py 5 200 -c zlib zstd zstandard -NCD -CLFY -ncf 100 -cs ha -PC",
+        "py -m cProfile -o classify.prof src/main.py 5 200 -c bzip2 gzip -NCD -CLFY -ncf 100 -cs knn10 -PC",
+        "py -m cProfile -o classify.prof src/main.py 5 200 -c zlib zstd zstandard -NCD -CLFY -ncf 100 -cs knn10 -PC"
     ]
     
     processes = []
