@@ -56,9 +56,10 @@ def parse_args(args: str=None):
                         required=True, 
                         action=CompFuncAction)
     parser.add_argument("-nclfy", "--num-classification-files",
-                        type=tuple[int, int, int],
+                        type=int,
+                        nargs=3,
                         metavar={"{1-250}", "{1-300}", "{1-300}"},
-                        choices=[range(1, 251), range(1, 301), range(1, 301)],
+                        choices=[k for k in range(1, 301)],
                         default=[5, 15, 15], 
                         help="Triple of (num_dirs, num_training_files, num_validation_files) to use for classification")
     parser.add_argument("-cs", "--schemes", "--classification-schemes",
