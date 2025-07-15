@@ -1,9 +1,10 @@
 import argparse
+from functools import partial
 import data
 import plots
 from similarity import get_tool_label, sim_C_ICD, sim_C_NCD
 from classification import classify_best_match, classify_files, classify_highest_average, classify_KNN
-import tools.compressors as comp
+import compressors as comp
 
 
 class CompFuncAction(argparse.Action):
@@ -54,23 +55,22 @@ def parse_args(args: str=None):
                         choices=["bzip2", "gzip", "zlib", "zstandard", "zstd"], 
                         required=True, 
                         action=CompFuncAction)
-    parser.add_argument("-ncf", "--num-classification-files",
-                        type=int,
-                        metavar="{1-300}",
-                        choices=range(1, 301),
-                        default=10, 
-                        help="Number of files to use for classification, where 0 < num_files <= 300. Default is 10 files.\
-                              The selected number of files will as much as possible be different from the sample files used for the similarity calculation.")
+    parser.add_argument("-nclfy", "--num-classification-files",
+                        type=tuple[int, int, int],
+                        metavar={"{1-250}", "{1-300}", "{1-300}"},
+                        choices=[range(1, 251), range(1, 301), range(1, 301)],
+                        default=[5, 15, 15], 
+                        help="Triple of (num_dirs, num_training_files, num_validation_files) to use for classification")
     parser.add_argument("-cs", "--schemes", "--classification-schemes",
                         type=str,
                         nargs="+",
                         metavar={"bm", "ha", "knn{1-300}"},
                         choices=["bm", "ha"] + [f"knn{i}" for i in range(1, 301)],
-                        default=[classify_best_match],
+                        default=[classify_best_match, classify_highest_average, (lambda f, c: classify_KNN(f, c, k=10))],
                         action=SchemeAction,
                         help="Classification schemes to use for the classification of files. Choose one or more classification schemes from {'bm', 'knn[1-300]', 'ha'}.\
                               Where 'bm' is 'Best Match', 'knn[1-300]' is 'K-Nearest Neighbors' with 1 <= K <= 300 files, and 'ha' is 'highest average'.\
-                              Default is 'bm knn10 ha'.")
+                              Default is 'bm ha knn10'.")
     
     # FLAGS
     parser.add_argument("-NCD", 
@@ -115,7 +115,8 @@ def parse_args(args: str=None):
 
 def run():
     args = parse_args()
-    data.load_java250_data(args.num_dirs, args.num_files)
+    
+    data.load_sample_data(args.num_dirs, args.num_files)
         
     show_plots = False
     if args.NCD:
@@ -141,7 +142,7 @@ def run():
         plots.create_fscores_plot()
         
     if args.classify > 0:
-        data.load_classification_data(args.num_classification_files)
+        data.load_classification_data(*args.num_classification_files)
         for scheme in args.schemes:
             classify_files(scheme, args.compressors)
             print(data.classification_per_group_per_tool)

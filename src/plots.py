@@ -17,11 +17,11 @@ def create_heatmap_plots():
         im = ax.imshow(sim_matrix, cmap="viridis", interpolation="nearest")
         fig.colorbar(im, ax=ax)
 
-        if data.NUM_DIRS > 15:
+        if data.NUM_SAMPLE_DIRS > 15:
             ax.axis("off")
         else:
-            labels = range(1, data.NUM_DIRS + 1)
-            ticks = [t for t in range(0, len(data.sample_files), data.NUM_FILES_PER_DIR)]
+            labels = range(1, data.NUM_SAMPLE_DIRS + 1)
+            ticks = [t for t in range(0, len(data.sample_files), data.NUM_SAMPLE_FILES)]
             ax.set_xticks(ticks, labels)
             ax.set_yticks(ticks, labels)
         fig.tight_layout()
@@ -59,11 +59,11 @@ def create_classification_plot():
         im = ax.imshow(clfy_per_group, cmap="viridis", interpolation="nearest")
         fig.colorbar(im, ax=ax)
 
-        if data.NUM_DIRS > 15:
+        if data.NUM_SAMPLE_DIRS > 15:
             ax.axis("off")
         else:
-            labels = range(1, data.NUM_DIRS + 1)
-            ticks = [i for i in range(data.NUM_DIRS)]
+            labels = range(1, data.NUM_SAMPLE_DIRS + 1)
+            ticks = [i for i in range(data.NUM_SAMPLE_DIRS)]
             ax.set_xticks(ticks, labels)
             ax.set_yticks(ticks, labels)
         fig.tight_layout()
